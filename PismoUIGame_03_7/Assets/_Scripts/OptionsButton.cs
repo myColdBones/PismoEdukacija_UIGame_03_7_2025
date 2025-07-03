@@ -4,16 +4,6 @@ public class OptionsButton : MonoBehaviour
 {
     [SerializeField]
     private GameObject panel;
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 
     public void SwitchOptionsActive()
     {
