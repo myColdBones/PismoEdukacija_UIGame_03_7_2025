@@ -2,8 +2,9 @@ using UnityEngine;
 
 public class PlayButton : MonoBehaviour
 {
-    public void PlayGame()
+    [SerializeField] private MainMenu menu;
+    public void OnButtonClicked()
     {
-        Debug.Log("Play game");
+        menu.StartGame();
     }
 }
