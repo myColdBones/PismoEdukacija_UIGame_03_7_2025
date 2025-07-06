@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     private bool IsGameRunning = false;
+    public GameObject PlayMenuScreen;
+    public GameObject GameOverScreen;
     //resources
     [SerializeField] private int workers;
     [SerializeField] private int nonworkers;
@@ -60,8 +62,8 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTime()
     {
-        if(IsGameRunning)
-        timer += Time.deltaTime;
+        if (IsGameRunning)
+            timer += Time.deltaTime;
         if (timer >= IRLSeconds1DayTakes)
         {
             days++;
@@ -96,12 +98,66 @@ public class GameManager : MonoBehaviour
     }
     public void DecreasePopulation(int numberOfDead)
     {
-        if (numberOfDead % 2 == 0)
+        if (numberOfDead < nonworkers)
         {
-            nonworkers--;
-            workers--;
+            nonworkers -= numberOfDead;
+        }
+        else if (numberOfDead > nonworkers && numberOfDead < Population())
+        {
+            numberOfDead -= nonworkers;
+            nonworkers = 0;
+            StartCoroutine(RandomWorkerDie(numberOfDead));
+        }
+        else
+        {
+            IsGameRunning = false;
+            PlayMenuScreen.SetActive(false);
+            GameOverScreen.SetActive(true);
+            Debug.Log("Game over");
         }
 
+    }
+    public IEnumerator RandomWorkerDie(int numberOfDead)
+    {
+        while (numberOfDead >= 0)
+        {
+            int workerToDie = Random.Range(0, 5);
+            if (workerToDie == 0 && farm > 0)
+            {
+                workers--;
+                farm--;
+                numberOfDead--;
+            }
+            if (workerToDie == 1 && woodcutter > 0)
+            {
+                workers--;
+                woodcutter--;
+                numberOfDead--;
+
+            }
+            if (workerToDie == 2 && blacksmith > 0)
+            {
+                workers--;
+                blacksmith--;
+                numberOfDead--;
+
+            }
+            if (workerToDie == 3 && quarry > 0)
+            {
+                workers--;
+                quarry--;
+                numberOfDead--;
+
+            }
+            if (workerToDie == 4 && ironmines > 0)
+            {
+                workers--;
+                ironmines--;
+                numberOfDead--;
+            }
+
+            yield return new WaitForEndOfFrame();
+        }
     }
     public void IncreasePopulation()
     {
@@ -111,7 +167,7 @@ public class GameManager : MonoBehaviour
             {
                 nonworkers += house;
 
-                if(Population() > GetMaxPopulation())
+                if (Population() > GetMaxPopulation())
                 {
                     nonworkers = GetMaxPopulation() - workers;
                 }
@@ -132,7 +188,17 @@ public class GameManager : MonoBehaviour
     }
     public void FoodConsume()
     {
-        food -= Population();
+        if (food - Population() > 0)
+        {
+            food -= Population();
+        }
+        else
+        {
+            food -= Population();
+            //food is negative
+            DecreasePopulation(food);
+
+        }
     }
     public void WoodGather()
     {
@@ -163,14 +229,14 @@ public class GameManager : MonoBehaviour
         if (CheckCost(cost))
         {
             BuildCost(cost);
-            house ++;
+            house++;
         }
         UpdateResourceAndBuildTMPS();
 
     }
     public void BuildFarm()
     {
-        ProductionCost cost = new ProductionCost(0, 10, 0, 0, 2);
+        ProductionCost cost = new ProductionCost(0, 10, 0, 0, 1);
         if (
             CheckCost(cost))
         {
@@ -181,7 +247,7 @@ public class GameManager : MonoBehaviour
     }
     public void BuildWoodcutter()
     {
-        ProductionCost cost = new ProductionCost(0,5,0,1,1);
+        ProductionCost cost = new ProductionCost(0, 5, 0, 1, 1);
 
         if (CheckCost(cost))
         {
@@ -192,7 +258,7 @@ public class GameManager : MonoBehaviour
     }
     public void BuildStoneQuarry()
     {
-        ProductionCost cost = new ProductionCost(0,5,0,0,1);
+        ProductionCost cost = new ProductionCost(0, 5, 0, 0, 1);
 
         if (CheckCost(cost))
         {
@@ -218,12 +284,12 @@ public class GameManager : MonoBehaviour
     }
     public void BuildCost(ProductionCost cost)
     {
-            food -= cost.foodCost;
-            wood -= cost.woodCost;
-            stone -= cost.stoneCost;
-            iron -= cost.ironCost;
-            nonworkers -= cost.workerCost;
-            workers += cost.workerCost;
+        food -= cost.foodCost;
+        wood -= cost.woodCost;
+        stone -= cost.stoneCost;
+        iron -= cost.ironCost;
+        nonworkers -= cost.workerCost;
+        workers += cost.workerCost;
     }
     [SerializeField] private TMP_Text PopulationTMP;
     [SerializeField] private TMP_Text FoodTMP;
@@ -245,23 +311,23 @@ public class GameManager : MonoBehaviour
         WoodTMP.text = $"Wood:{wood}";
         StoneTMP.text = $"Stone:{stone}";
         IronTMP.text = $"Iron:{iron}";
-        HouseTMP.text = $"Houses:{house}" + 
+        HouseTMP.text = $"Houses:{house}" +
                          "\n     Cost:-2 wood";
-        FarmTMP.text = $"Farms:{farm}" + 
-                        "\n     Cost:-10 wood"+
+        FarmTMP.text = $"Farms:{farm}" +
+                        "\n     Cost:-10 wood" +
                         "\n          -1 nonworker";
-        WoodcuttersTMP.text = $"Woodcutters:{woodcutter}" + 
-                               "\n     Cost:-5 wood"+
-                               "\n          -1 iron"+
+        WoodcuttersTMP.text = $"Woodcutters:{woodcutter}" +
+                               "\n     Cost:-5 wood" +
+                               "\n          -1 iron" +
                                "\n          -1 nonworker";
 
-        QuarryTMP.text = $"Quarrys:{quarry}" + 
-                          "\n     Cost:-5 wood"+
+        QuarryTMP.text = $"Quarrys:{quarry}" +
+                          "\n     Cost:-5 wood" +
                           "\n          -1nonworker";
 
-        IronmineTMP.text = $"Ironmine:{iron}" + 
-                            "\n     Cost:-10 wood"+
-                            "\n     Cost:-20 stone"+
+        IronmineTMP.text = $"Ironmine:{ironmines}" +
+                            "\n     Cost:-10 wood" +
+                            "\n     Cost:-20 stone" +
                             "\n     Cost:-1 nonworker";
 
 
